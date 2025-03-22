@@ -46,6 +46,10 @@
 # alpha should be c-1 in length, and beta a scalar
 
 ###############################################################################
+# Library necessary packages for the script
+library('MASS')
+library('FSAdata')
+###############################################################################
 
 # Lets write out a function to calculate the log-likelihood if we know the data
 # and the parameters
@@ -62,7 +66,7 @@ log.lik <- function(data, alpha, beta){
   } else { #Probability if any other category
    p_i <- plogis(alpha[y_i] - beta * x_i) - plogis(alpha[y_i-1] - beta * x_i)
   }
-  value[i] <- log(p_i)
+  value[i] <- log(pmax(p_i, 1e-12)) #add small epsilon to deal with numeric issues near zero
   }
   return(sum(value))
 }
@@ -99,32 +103,32 @@ neg.log.lik <- function(parms, data){
     } else { #Probability if any other category
       p_i <- plogis(alpha[y_i] - beta * x_i) - plogis(alpha[y_i-1] - beta * x_i)
     }
-    value[i] <- log(p_i)
+    value[i] <- log(pmax(p_i, 1e-12))
   }
   return(-sum(value)) # Made negative because optim minimizes functions
 }
 
 #lets load a dataset to try this out
-dat<-read.csv("SL_csv.csv")
-dat <-dat[,c(3,2)]
-names(dat) <- c('learn', 'age')
-dat$learn <- factor(dat$learn, ordered = T)
-dat$age <- as.numeric(dat$age)
-str(dat)
-head(dat)
+data("Jonubi1")
+jonubi<-Jonubi1[c(-410,-409,-408),c(2,1)]
+rm(Jonubi1)
+names(jonubi)<-c('Age', 'Length')
+jonubi$Age <- factor(jonubi$Age)
+head(jonubi)
+str(jonubi)
 
 # fit polr using MASS package to compare results
-polrresult <- polr(learn ~ age, data = dat)
+polrresult <- polr(Age ~ Length, data = jonubi)
 
-#turn learn into interger so likelihood function can handle it
-dat$learn <- as.integer(dat$learn)
+#turn learn into integer so likelihood function can handle it
+jonubi$Age <- as.integer(jonubi$Age)
 
 # Set starting values (4 alphas and 1 beta)
-parms <- c(-4,-2,-1,1,0)
+parms <- c(15,20,30,40,1)
 
 optimresult <- optim(par = parms,
       fn = neg.log.lik,
-      data = dat,
+      data = jonubi,
       method = 'BFGS')
 
 polrresult
