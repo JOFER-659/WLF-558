@@ -19,9 +19,7 @@ rm(Jonubi1)
 names(jonubi)<-c('Age', 'Length')
 
 # Finding values to use as priors
-# I will find the average length for each age class, and take the 
-# difference between ages to estimate cut off points to use as priors
-
+# Center of two age groups average lengths
 #Alpha 1
 a1mean<-((mean(jonubi[jonubi$Age == 2,2])-mean(jonubi[jonubi$Age == 1,2]))/2) + mean(jonubi[jonubi$Age == 1,2])
 #Alpha 2

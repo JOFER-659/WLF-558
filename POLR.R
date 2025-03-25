@@ -9,7 +9,7 @@
 # is similar to multinomial regression but takes advantage of extra information
 # stored within the data, given by its ordinal form. 
 
-# Data typically comes in the form of 1,2,3,...,c where n is the number of
+# Data typically comes in the form of 1,2,3,...,c where c is the number of
 # caterogies. From the ordinal structure, it is assumed 1 < 2 < 3 < ... < c. 
 # For example the likert scale data, we know disagree is less than neutral, and
 # neutral is less than agree. 
@@ -136,3 +136,35 @@ optimresult
 
 # Notice the results are near identical :)
 # WOOHOO
+
+
+######### Plot to see likelihoods
+
+neg.log.lik.plot <- function(parms, data){
+  alpha <- parms[1:(length(parms)-1)] # Extract alphas
+  beta <- parms[length(parms)]         # Extract Beta
+  likelihoods <- numeric(length = nrow(data))  # Placeholder for likelihoods
+  
+  for (i in 1:nrow(data)){
+    y_i <- data[i, 1]
+    x_i <- data[i, 2]
+    
+    if (y_i == 1){ # probability if first category
+      p_i <- plogis(alpha[1] - beta * x_i)
+    } else if (y_i == length(alpha) + 1){ # probability if last category
+      p_i <- 1 - plogis(alpha[length(alpha)] - beta * x_i)
+    } else { # probability for other categories
+      p_i <- plogis(alpha[y_i] - beta * x_i) - plogis(alpha[y_i-1] - beta * x_i)
+    }
+    
+    likelihoods[i] <- log(p_i)  # Store the likelihood for each data point
+  }
+  
+  return(likelihoods)  # Return the likelihoods (instead of the negative sum)
+}
+
+likelihoods<-neg.log.lik.plot(parms, jonubi)
+
+plot(likelihoods, type = 'o', col = 'blue', 
+     xlab = 'Data Point Index', ylab = 'Likelihood', 
+     main = 'Likelihoods of Each Data Point')
